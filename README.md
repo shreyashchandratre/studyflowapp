@@ -45,9 +45,5 @@ An AI-powered, modern mobile and desktop application crafted with Flutter that s
    flutter run
    ```
 
-## 🔐 Security Note
 
-Secret API credentials are ignored by Git via `flutter_dotenv`. Never expose your real `.env` file!
-
----
 *Built to make learning beautiful and effortless.*
