@@ -1,0 +1,5 @@
+Payload keys: title,file -> Status: 400 Msg: Missing content text
+Payload keys: title,pdf -> Status: 400 Msg: Missing content text
+Payload keys: title,document -> Status: 400 Msg: Missing content text
+Payload keys: title,data -> Status: 400 Msg: Missing content text
+Payload keys: title,content -> Status: 400 Msg: Missing content text

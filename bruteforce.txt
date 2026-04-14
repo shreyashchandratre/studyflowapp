@@ -1,0 +1,6 @@
+Payload keys: title,text -> Status: 500 Msg: Both local Ollama and Cloud API are unavailable. Please check your connection.
+Payload keys: title,contentText -> Status: 400 Msg: Missing content text
+Payload keys: title,textContent -> Status: 400 Msg: Missing content text
+Payload keys: title,data -> Status: 400 Msg: Missing content text
+Payload keys: title,content -> Status: 400 Msg: Missing content text
+Payload keys: title,text_content -> Status: 400 Msg: Missing content text
