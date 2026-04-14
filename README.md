@@ -32,14 +32,6 @@ An AI-powered, modern mobile and desktop application crafted with Flutter that s
    flutter pub get
    ```
 
-3. **Configure Environment Variables:**
-   * Rename `.env.example` to `.env`
-   * Obtain a free API key from [Cloud Cerebras](https://cloud.cerebras.ai)
-   * Set your key inside the `.env` file:
-     ```env
-     CEREBRAS_API_KEY=csk-your_api_key_here
-     ```
-
 4. **Run the App:**
    ```bash
    flutter run
