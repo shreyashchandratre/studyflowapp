@@ -45,3 +45,16 @@ app.*.map.json
 /android/app/release
 
 .env
+
+# Sensitive / temp files
+bruteforce.txt
+bruteforce2.txt
+build_errors.txt
+err.json
+error2.json
+file_err.json
+output.json
+output2.json
+quiz_err.json
+summary_err.json
+temp.pdf
