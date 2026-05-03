@@ -1,114 +1,144 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// StudyFlow design system — light theme, accessibility-first.
+/// Spec colours: Background #F8F8F6, Surface #FFFFFF, Primary text #1A2340,
+/// Secondary #6B7A99, Accent #00B4A6, Error #E05252, Success #3DB87A
+class AppColors {
+  static const background = Color(0xFFF8F8F6);
+  static const surface    = Color(0xFFFFFFFF);
+  static const primary    = Color(0xFF1A2340); // navy
+  static const secondary  = Color(0xFF6B7A99);
+  static const accent     = Color(0xFF00B4A6); // teal
+  static const accentLight = Color(0xFFE0F7F5);
+  static const error      = Color(0xFFE05252);
+  static const success    = Color(0xFF3DB87A);
+  static const border     = Color(0xFFE5EAF0);
+  static const muted      = Color(0xFF9BAABF);
+
+  // Gamification
+  static const xpGold     = Color(0xFFF59E0B);
+  static const streakOrange = Color(0xFFEF6C00);
+}
+
 class AppTheme {
-  // ── Core palette ──────────────────────────────────────────────────────────
-  static const Color bgColor        = Color(0xFFF5F5F0); // warm off-white
-  static const Color surfaceColor   = Color(0xFFFFFFFF); // cards / sheets
-  static const Color navyText       = Color(0xFF1B2A4A); // headings
-  static const Color greyText       = Color(0xFF5A6B87); // body
-  static const Color mutedText      = Color(0xFF94A3B8); // hints / secondary
-  static const Color borderColor    = Color(0xFFE2E8F0); // borders, dividers
-  static const Color accent         = Color(0xFF2B8A8A); // teal — buttons, links
-  static const Color accentLight    = Color(0xFFE8F4F4); // accent backgrounds
-  static const Color errorColor     = Color(0xFFDC2626);
-  static const Color drawerBg       = Color(0xFF1B2A4A); // navy drawer
+  // Keep legacy aliases so existing files that import app_theme.dart still compile
+  static const Color bgColor      = AppColors.background;
+  static const Color surfaceColor = AppColors.surface;
+  static const Color navyText     = AppColors.primary;
+  static const Color greyText     = AppColors.secondary;
+  static const Color mutedText    = AppColors.muted;
+  static const Color borderColor  = AppColors.border;
+  static const Color accent       = AppColors.accent;
+  static const Color accentLight  = AppColors.accentLight;
+  static const Color errorColor   = AppColors.error;
+  static const Color drawerBg     = AppColors.primary;
+  static const Color primaryPurple = AppColors.accent;
+  static const Color electricBlue  = AppColors.accent;
+  static const Color cyan          = AppColors.accent;
 
-  // ── Legacy aliases (so old references don't break during migration) ──────
-  static const Color primaryPurple  = accent;
-  static const Color electricBlue   = accent;
-  static const Color cyan           = accent;
-
-  // ── Theme ─────────────────────────────────────────────────────────────────
   static ThemeData get lightTheme {
-    final base = GoogleFonts.interTextTheme();
+    final base = GoogleFonts.plusJakartaSansTextTheme();
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: bgColor,
-      colorSchemeSeed: accent,
+      scaffoldBackgroundColor: AppColors.background,
+      colorSchemeSeed: AppColors.accent,
       textTheme: base.apply(
-        bodyColor: navyText,
-        displayColor: navyText,
+        bodyColor: AppColors.primary,
+        displayColor: AppColors.primary,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: bgColor,
-        foregroundColor: navyText,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.primary,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: navyText,
+          color: AppColors.primary,
         ),
-        iconTheme: const IconThemeData(color: navyText, size: 24),
+        iconTheme: const IconThemeData(color: AppColors.primary, size: 24),
       ),
       cardTheme: CardThemeData(
-        color: surfaceColor,
+        color: AppColors.surface,
         elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: borderColor),
+          side: const BorderSide(color: AppColors.border),
         ),
+        shadowColor: Colors.black.withValues(alpha: 0.06),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: accent,
+          backgroundColor: AppColors.accent,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
+          minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.plusJakartaSans(
+              fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: accent,
-          side: const BorderSide(color: accent),
+          foregroundColor: AppColors.accent,
+          side: const BorderSide(color: AppColors.accent),
+          minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          textStyle: GoogleFonts.plusJakartaSans(
+              fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surfaceColor,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        hintStyle: TextStyle(color: mutedText, fontWeight: FontWeight.w400),
+        fillColor: AppColors.background,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        hintStyle: const TextStyle(
+            color: AppColors.muted, fontWeight: FontWeight.w400),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: borderColor),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: accent, width: 2),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: errorColor),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: errorColor, width: 2),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
       ),
-      dividerTheme: const DividerThemeData(color: borderColor, thickness: 1, space: 1),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: accent,
-        foregroundColor: Colors.white,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
+      dividerTheme:
+          const DividerThemeData(color: AppColors.border, thickness: 1, space: 1),
+      progressIndicatorTheme:
+          const ProgressIndicatorThemeData(color: AppColors.accent),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: navyText,
-        contentTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+        backgroundColor: AppColors.primary,
+        contentTextStyle: GoogleFonts.plusJakartaSans(
+            color: Colors.white, fontSize: 14),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(color: accent),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.accent,
+        unselectedItemColor: AppColors.muted,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+      ),
     );
   }
 
-  // Keep the old name so main.dart still compiles during migration
+  // Backward-compat alias
   static ThemeData get darkTheme => lightTheme;
 }

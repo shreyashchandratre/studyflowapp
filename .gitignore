@@ -58,3 +58,8 @@ output2.json
 quiz_err.json
 summary_err.json
 temp.pdf
+
+# Firebase secrets
+google-services.json
+firebase_options.dart
+

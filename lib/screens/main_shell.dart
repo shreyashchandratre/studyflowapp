@@ -1,195 +1,151 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/user_provider.dart';
-import '../providers/document_provider.dart';
-import '../providers/chat_provider.dart';
-import '../screens/login_screen.dart';
+import '../providers/materials_provider.dart';
+import '../providers/gamification_provider.dart';
 import '../utils/app_theme.dart';
-import 'dashboard_screen.dart';
-import 'content_screen.dart';
-import 'flashcard_topics_screen.dart';
-import 'chat_screen.dart';
-import 'compare_screen.dart';
-import 'profile_screen.dart';
+import 'home/home_screen.dart';
+import 'materials/materials_screen.dart';
+import 'chat/chat_screen_new.dart';
+import 'leaderboard/leaderboard_screen.dart';
+import 'profile/profile_screen_new.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
-
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends State<MainShell> {
-  int _selectedIndex = 0;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  int _tab = 0;
 
-  final List<_NavItem> _navItems = const [
-    _NavItem(icon: Icons.dashboard_outlined, label: 'Dashboard'),
-    _NavItem(icon: Icons.library_books_outlined, label: 'Content'),
-    _NavItem(icon: Icons.style_outlined, label: 'Flashcards'),
-    _NavItem(icon: Icons.chat_bubble_outline_rounded, label: 'Chat with AI'),
-    _NavItem(icon: Icons.compare_arrows_outlined, label: 'Compare'),
-    _NavItem(icon: Icons.person_outline_rounded, label: 'My Profile'),
+  static const _tabs = [
+    _TabItem(Icons.home_rounded, Icons.home_outlined, 'Home'),
+    _TabItem(Icons.library_books_rounded, Icons.library_books_outlined, 'Materials'),
+    _TabItem(Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Chat'),
+    _TabItem(Icons.leaderboard_rounded, Icons.leaderboard_outlined, 'Leaderboard'),
+    _TabItem(Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
   ];
 
   late final List<Widget> _screens;
-
-  void _openDrawer() => _scaffoldKey.currentState?.openDrawer();
 
   @override
   void initState() {
     super.initState();
     _screens = [
-      DashboardScreen(onMenuTap: _openDrawer),
-      ContentScreen(onMenuTap: _openDrawer),
-      FlashcardTopicsScreen(onMenuTap: _openDrawer),
-      ChatScreen(onMenuTap: _openDrawer),
-      CompareScreen(onMenuTap: _openDrawer),
-      ProfileScreen(onMenuTap: _openDrawer),
+      HomeScreen(onTabChange: (i) => setState(() => _tab = i)),
+      const MaterialsScreen(),
+      const ChatScreenNew(),
+      const LeaderboardScreen(),
+      const ProfileScreenNew(),
     ];
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<UserProvider>(context, listen: false).loadMyProfile();
-      Provider.of<DocumentProvider>(context, listen: false).fetchDocuments();
+      context.read<GamificationProvider>().loadMyProfile();
+      context.read<MaterialsProvider>().fetchDocuments();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (ctx, constraints) {
+      if (constraints.maxWidth > 720) return _buildDesktop(ctx);
+      return _buildMobile();
+    });
+  }
+
+  Widget _buildMobile() {
     return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: AppTheme.bgColor,
-      body: IndexedStack(index: _selectedIndex, children: _screens),
-      drawer: _buildDrawer(context),
+      backgroundColor: AppColors.background,
+      body: IndexedStack(index: _tab, children: _screens),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final userProv = Provider.of<UserProvider>(context, listen: false);
-    final profile = userProv.myProfile;
-    final name = auth.user?['name']?.toString() ?? profile?.name ?? 'Student';
-    final username = auth.user?['username']?.toString() ?? profile?.username ?? '';
-    final xp = profile?.xp ?? 0;
+  Widget _buildDesktop(BuildContext ctx) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Row(children: [
+        _buildRail(),
+        const VerticalDivider(width: 1),
+        Expanded(child: IndexedStack(index: _tab, children: _screens)),
+      ]),
+    );
+  }
 
-    return Drawer(
-      backgroundColor: AppTheme.drawerBg,
+  Widget _buildRail() {
+    return NavigationRail(
+      backgroundColor: AppColors.surface,
+      selectedIndex: _tab,
+      onDestinationSelected: (i) => setState(() => _tab = i),
+      labelType: NavigationRailLabelType.all,
+      selectedIconTheme: const IconThemeData(color: AppColors.accent),
+      unselectedIconTheme: const IconThemeData(color: AppColors.muted),
+      selectedLabelTextStyle: const TextStyle(
+          color: AppColors.accent, fontWeight: FontWeight.w700, fontSize: 12),
+      unselectedLabelTextStyle:
+          const TextStyle(color: AppColors.muted, fontSize: 12),
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Container(
+          width: 40, height: 40,
+          decoration: BoxDecoration(
+              color: AppColors.accent, borderRadius: BorderRadius.circular(12)),
+          child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 24),
+        ),
+      ),
+      destinations: _tabs
+          .map((t) => NavigationRailDestination(
+                icon: Icon(t.iconOutlined),
+                selectedIcon: Icon(t.icon),
+                label: Text(t.label),
+              ))
+          .toList(),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 16, offset: const Offset(0, -4))],
+      ),
       child: SafeArea(
-        child: Column(
-          children: [
-            // ── Profile Header ──
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
-                border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.08))),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Avatar
-                  Container(
-                    width: 52, height: 52,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppTheme.accent,
-                    ),
-                    child: Center(
-                      child: Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : 'S',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white)),
-                  if (username.isNotEmpty)
-                    Text('@$username', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.5))),
-                  const SizedBox(height: 10),
-                  // XP badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '$xp XP',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // ── Nav Items ──
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                itemCount: _navItems.length,
-                itemBuilder: (context, index) {
-                  final item = _navItems[index];
-                  final isSelected = _selectedIndex == index;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: ListTile(
-                      leading: Icon(
-                        item.icon,
-                        color: isSelected ? AppTheme.accent : Colors.white.withOpacity(0.4),
-                        size: 22,
-                      ),
-                      title: Text(
-                        item.label,
+        top: false,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_tabs.length, (i) {
+              final t = _tabs[i];
+              final sel = _tab == i;
+              return GestureDetector(
+                onTap: () => setState(() => _tab = i),
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: 60,
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Icon(sel ? t.icon : t.iconOutlined,
+                        color: sel ? AppColors.accent : AppColors.muted, size: 24),
+                    const SizedBox(height: 3),
+                    Text(t.label,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
-                        ),
-                      ),
-                      selected: isSelected,
-                      selectedTileColor: AppTheme.accent.withOpacity(0.12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      onTap: () {
-                        setState(() => _selectedIndex = index);
-                        Navigator.pop(context);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // ── Logout ──
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: ListTile(
-                leading: Icon(Icons.logout_rounded, color: Colors.white.withOpacity(0.5), size: 22),
-                title: Text('Logout', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                onTap: () async {
-                  await Provider.of<AuthProvider>(context, listen: false).logout();
-                  if (context.mounted) {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                  }
-                },
-              ),
-            ),
-          ],
+                            fontSize: 11,
+                            fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+                            color: sel ? AppColors.accent : AppColors.muted)),
+                  ]),
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
   }
 }
 
-class _NavItem {
+class _TabItem {
   final IconData icon;
+  final IconData iconOutlined;
   final String label;
-  const _NavItem({required this.icon, required this.label});
-}
-
-mixin DrawerOpener<T extends StatefulWidget> on State<T> {
-  void openDrawer() => Scaffold.of(context).openDrawer();
+  const _TabItem(this.icon, this.iconOutlined, this.label);
 }

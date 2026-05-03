@@ -1,109 +1,132 @@
 import 'package:flutter/material.dart';
-import '../models/chat_message_model.dart';
-import '../services/chat_service.dart';
-import '../services/gemini_ai_service.dart';
+import '../services/cerebras_service.dart';
+import '../models/document_model.dart';
+
+class ChatMessage {
+  final String role; // 'user' | 'assistant'
+  final String content;
+  final DateTime timestamp;
+
+  ChatMessage({required this.role, required this.content, DateTime? timestamp})
+      : timestamp = timestamp ?? DateTime.now();
+
+  bool get isUser => role == 'user';
+
+  // Legacy compat
+  factory ChatMessage.local({
+    required String role,
+    required String content,
+    String? sessionId,
+  }) =>
+      ChatMessage(role: role, content: content);
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
+        role: json['role']?.toString() ?? 'user',
+        content: json['content']?.toString() ?? '',
+      );
+}
+
+// Legacy compat for old ChatSession references in chat_screen
+class ChatSession {
+  final String id;
+  final String title;
+  final int messageCount;
+  ChatSession({required this.id, required this.title, this.messageCount = 0});
+  factory ChatSession.fromJson(Map<String, dynamic> j) => ChatSession(
+        id: j['id']?.toString() ?? '',
+        title: j['title']?.toString() ?? 'Session',
+        messageCount: (j['messageCount'] as num?)?.toInt() ?? 0,
+      );
+}
 
 class ChatProvider with ChangeNotifier {
-  final ChatService _service = ChatService();
-  final GeminiAiService _ai = GeminiAiService();
+  final CerebrasService _ai = CerebrasService();
 
-  List<ChatMessage> _messages = [];
-  List<ChatSession> _sessions = [];
-  String? _currentSessionId;
-  bool _isLoading = false;
+  final List<ChatMessage> _messages = [];
+  final List<Map<String, String>> _history = []; // for Cerebras API
   bool _isSending = false;
+  bool _isLoading = false;
   String? _errorMessage;
+  String? _streamingContent; // accumulates tokens during streaming
+
+  // Legacy compat
+  List<ChatSession> get sessions => [];
+  String? get currentSessionId => null;
 
   List<ChatMessage> get messages => _messages;
-  List<ChatSession> get sessions => _sessions;
-  String? get currentSessionId => _currentSessionId;
-  bool get isLoading => _isLoading;
   bool get isSending => _isSending;
+  bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get streamingContent => _streamingContent;
 
-  void _setError(String? v) { _errorMessage = v; notifyListeners(); }
-
-  // ── Sessions (still fetched from backend if available) ─────────────────────
-
-  Future<void> loadSessions() async {
-    _isLoading = true;
-    notifyListeners();
-    try {
-      final raw = await _service.getSessions();
-      _sessions = raw.map((s) => ChatSession.fromJson(s as Map<String, dynamic>)).toList();
-    } catch (_) {
-      _sessions = []; // Sessions are optional — fail silently
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> loadHistory(String sessionId) async {
-    _isLoading = true;
-    _currentSessionId = sessionId;
-    _messages = [];
-    notifyListeners();
-    try {
-      final raw = await _service.getHistory(sessionId);
-      _messages = raw.map((m) => ChatMessage.fromJson(m as Map<String, dynamic>)).toList();
-    } catch (e) {
-      _setError(e.toString().replaceAll('Exception: ', ''));
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
+  // ── Session management ─────────────────────────────────────────────────────
 
   void startNewSession() {
-    _currentSessionId = null;
-    _messages = [];
-    _ai.startNewChat(); // Reset AI conversation context
+    _messages.clear();
+    _history.clear();
+    _streamingContent = null;
     notifyListeners();
   }
 
-  // ── Send message — routed through local AI ─────────────────────────────────
+  // Legacy compat no-ops
+  Future<void> loadSessions() async {}
+  Future<void> loadHistory(String id) async {}
+  Future<void> deleteSession(String id) async {}
 
-  Future<void> sendMessage(String text, {String? studyMaterial}) async {
-    if (text.trim().isEmpty) return;
+  // ── Send with streaming ────────────────────────────────────────────────────
 
-    // Optimistically show user message
-    final userMsg = ChatMessage.local(
-      role: 'user',
-      content: text,
-      sessionId: _currentSessionId,
-    );
-    _messages.add(userMsg);
+  Future<void> sendMessage(
+    String text, {
+    String? studyMaterial,
+    List<DocumentModel>? documents,
+  }) async {
+    if (text.trim().isEmpty || _isSending) return;
+
+    // Build system prompt with RAG context
+    final sb = StringBuffer(
+        'You are StudyFlow AI, an expert study assistant. '
+        'Answer questions clearly and educationally.\n');
+
+    if (studyMaterial != null && studyMaterial.trim().isNotEmpty) {
+      final ctx = studyMaterial.length > 25000
+          ? studyMaterial.substring(0, 25000)
+          : studyMaterial;
+      sb.write(
+          '\nHere are the user\'s uploaded study materials (use these as primary context). '
+          'If the answer is outside this material, use your general knowledge:\n"""\n$ctx\n"""');
+    }
+
+    // Add user message to UI and history
+    _messages.add(ChatMessage(role: 'user', content: text));
+    _history.add({'role': 'user', 'content': text});
     _isSending = true;
+    _streamingContent = '';
     notifyListeners();
 
+    // Add placeholder assistant message that will be updated token-by-token
+    _messages.add(ChatMessage(role: 'assistant', content: ''));
+
     try {
-      // Use Cerebras AI directly — bypass broken backend
-      final reply = await _ai.sendChatMessage(text, studyMaterialContext: studyMaterial);
-      _messages.add(ChatMessage.local(
-        role: 'assistant',
-        content: reply,
-        sessionId: _currentSessionId,
-      ));
+      await for (final token
+          in _ai.streamChat(_history, systemPrompt: sb.toString())) {
+        _streamingContent = (_streamingContent ?? '') + token;
+        // Update the last message in-place
+        _messages[_messages.length - 1] =
+            ChatMessage(role: 'assistant', content: _streamingContent!);
+        notifyListeners();
+      }
+
+      final finalContent = _streamingContent ?? '';
+      _history.add({'role': 'assistant', 'content': finalContent});
     } catch (e) {
-      _messages.add(ChatMessage.local(
+      _messages[_messages.length - 1] = ChatMessage(
         role: 'assistant',
-        content: '⚠️ ${e.toString().replaceAll('Exception: ', '')}',
-      ));
+        content: '⚠️ ${e.toString().replaceAll("Exception: ", "")}',
+      );
     } finally {
       _isSending = false;
+      _streamingContent = null;
       notifyListeners();
-    }
-  }
-
-  Future<void> deleteSession(String sessionId) async {
-    try {
-      await _service.deleteSession(sessionId);
-      _sessions.removeWhere((s) => s.id == sessionId);
-      if (_currentSessionId == sessionId) startNewSession();
-      notifyListeners();
-    } catch (e) {
-      _setError(e.toString().replaceAll('Exception: ', ''));
     }
   }
 }
