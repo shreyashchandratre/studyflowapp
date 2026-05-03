@@ -32,7 +32,22 @@ An AI-powered, modern mobile and desktop application crafted with Flutter that s
    flutter pub get
    ```
 
-4. **Run the App:**
+3. **Environment Setup:**
+   - Create a file named `.env` in the root directory.
+   - Add your Cerebras API key to the file (refer to `.env.example`):
+     ```env
+     CEREBRAS_API_KEY=your_api_key_here
+     ```
+
+4. **Firebase Configuration:**
+   - Create a new project in the [Firebase Console](https://console.firebase.google.com/).
+   - Enable **Authentication** (Email/Password) and **Firestore Database**.
+   - Run the FlutterFire CLI to generate your `firebase_options.dart` file:
+     ```bash
+     flutterfire configure
+     ```
+
+5. **Run the App:**
    ```bash
    flutter run
    ```
