@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"studyflow-de2c5","appId":"1:82274737482:android:3fb60d4e93bc8568e9f5b3","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"studyflow-de2c5","configurations":{"android":"1:82274737482:android:3fb60d4e93bc8568e9f5b3","ios":"1:82274737482:ios:57d8bfde33606825e9f5b3","macos":"1:82274737482:ios:57d8bfde33606825e9f5b3","web":"1:82274737482:web:dc6b2bc05364ae05e9f5b3","windows":"1:82274737482:web:bd5dabf3cbb9f2c0e9f5b3"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "studyflow-de2c5",
+          "appId": "1:82274737482:android:3fb60d4e93bc8568e9f5b3",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "studyflow-de2c5",
+          "configurations": {
+            "android": "1:82274737482:android:3fb60d4e93bc8568e9f5b3",
+            "ios": "1:82274737482:ios:57d8bfde33606825e9f5b3",
+            "macos": "1:82274737482:ios:57d8bfde33606825e9f5b3",
+            "web": "1:82274737482:web:dc6b2bc05364ae05e9f5b3",
+            "windows": "1:82274737482:web:bd5dabf3cbb9f2c0e9f5b3"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
